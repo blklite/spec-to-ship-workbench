@@ -1,0 +1,25 @@
+# Example mapping of each role (roles/) to a persona (personas/).
+# The 7 personas are an example set: replace a persona, or map a role to your
+# own persona file. A runner adapter (v0.1b) will read the same table to pick
+# a runner for each role.
+
+[roles.builder]
+persona = "marge"
+
+[roles.reviewer]
+persona = "lisa"
+
+[roles.rework]
+persona = "milhouse"
+
+[roles.spec-checker]
+persona = "ned"
+
+[roles.product-owner]
+persona = "apu"
+
+[roles.architect]
+persona = "frink"
+
+[roles.agentic-reviewer]
+persona = "martin"

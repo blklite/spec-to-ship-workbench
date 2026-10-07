@@ -1,0 +1,46 @@
+# Generic secret and name patterns for scripts/secret-scan.sh.
+#
+# Format: <class> <extended regex>   (grep -E syntax; no Perl syntax)
+# Several lines may share 1 class. Lines starting with # are comments.
+#
+# "allow <extended regex>" replaces a match by a space before the scan, so a
+# placeholder in the docs or the commit trailer of a tool is not a hit. An
+# allow rule removes only the text it matches; the rest of the line is still
+# scanned. The example-domain rule removes only the domain part, so a private
+# word in front of it is still found.
+
+allow @example\.(com|org|net|invalid)([^A-Za-z0-9.-]|$)
+allow noreply@anthropic\.com([^A-Za-z0-9.-]|$)
+
+# A user folder: /home/<name>, /Users/<name>, C:\Users\<name>, C:/Users/<name>
+user-path /home/[A-Za-z0-9._-]+
+user-path /Users/[A-Za-z0-9._-]+
+user-path [A-Za-z]:[\\/]+Users[\\/]+[A-Za-z0-9._-]+
+
+# An email address
+email [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+# A Tailscale address (the CGNAT range 100.64/10) and a MagicDNS host name
+tailscale-ip (^|[^0-9.])100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}([^0-9]|$)
+tailscale-host [A-Za-z0-9-]+\.[A-Za-z0-9-]+\.ts\.net
+
+# A Supabase project host, and the secret key shapes
+supabase-host [a-z0-9]{20}\.supabase\.(co|in)
+supabase-key sb_secret_[A-Za-z0-9_-]{16,}
+supabase-key sbp_[a-f0-9]{40}
+
+# A JSON web token (header and payload start with {" in base64)
+jwt eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}
+
+# GitHub tokens
+github-token (ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}
+github-token github_pat_[A-Za-z0-9_]{40,}
+
+# Anthropic and OpenRouter API keys
+anthropic-key sk-ant-[A-Za-z0-9_-]{20,}
+openrouter-key sk-or-v1-[A-Za-z0-9]{32,}
+
+# Azure DevOps personal access tokens: the 52-character base32 form and the
+# 84-character form with the AZDO signature
+ado-token (^|[^a-z0-9])[a-z2-7]{52}([^a-z0-9]|$)
+ado-token [A-Za-z0-9]{76}AZDO[A-Za-z0-9]{4}

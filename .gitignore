@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# The private-word list stays outside the repo; never commit a filled copy.
+denylist.txt
+# Your filled config holds private values (the owner name): keep it local.
+config/workbench.toml
+config/personas.toml

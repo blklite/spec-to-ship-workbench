@@ -1,0 +1,19 @@
+# Example private-word list for scripts/secret-scan.sh. Placeholders only.
+#
+# Copy this file OUTSIDE the repo, for example to
+#   ~/.config/workbench/denylist.txt
+# fill it with your own private words, and point the scan at it:
+#   WORKBENCH_DENYLIST=~/.config/workbench/denylist.txt scripts/secret-scan.sh
+#
+# Format: <class> <word>   (1 word or phrase for each line)
+# The class is a free label made of letters, digits, _ and -; the scan prints
+# it as private:<class>. Matching is case-insensitive and whole-word.
+# Never commit the filled list, and never paste its content into a report.
+
+person Example-Person-Name
+user example-login
+host example-host
+domain example-domain.internal
+org example-org
+project example-project
+path example-user-folder

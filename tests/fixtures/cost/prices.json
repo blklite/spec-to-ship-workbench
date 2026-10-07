@@ -1,0 +1,15 @@
+{
+ "source": "Synthetic round prices for the tests. USD per million tokens.",
+ "cache_write_multiplier": {
+  "5m": 1.25,
+  "1h": 2.0
+ },
+ "chars_per_token": 3.2,
+ "models": {
+  "test-model-a": {
+   "input": 1.0,
+   "output": 10.0,
+   "cache_read": 0.1
+  }
+ }
+}

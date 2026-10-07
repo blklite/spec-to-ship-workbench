@@ -1,0 +1,64 @@
+# Example configuration of the workbench. Copy it to config/workbench.toml
+# and change the values for your installation. The process files refer to
+# these values by key, in the form `config:<table>.<key>`.
+
+[owner]
+# The person who runs the intake, answers questions and approves delivery.
+name = "Owner"
+# The tracker state of a work item that waits for the owner.
+waiting_state = "Waiting for Owner"
+
+[budget]
+# An alert goes out at this share of a limit; at the stop share the workbench
+# stops and asks.
+alert_percent = 80
+stop_percent = 100
+
+[budget.small]
+scope = "1 change in 1 or 2 files"
+usd = 40          # the whole item: subagents plus main session, list price
+hours = 2
+rework_rounds = 2
+
+[budget.medium]
+scope = "A change across several files or pages"
+usd = 100
+hours = 4
+rework_rounds = 2
+
+[tiers.high]
+# Example list: each of these actions needs the owner's approval.
+actions = [
+  "credentials",
+  "auth",
+  "data migrations",
+  "a delete of live data",
+  "production access",
+  "the network edge",
+]
+
+[delivery]
+# After this many Low tier items in a row with no defect found after
+# delivery, the merge and the live write of a Low tier item become automatic,
+# with an alert.
+low_tier_auto_after = 3
+
+[specs]
+home = "specs/"
+max_kb = 8
+
+[messages]
+# A message to the owner fits on 1 screen.
+max_chars = 1500
+
+[models]
+main_session = "claude-opus-5-5"
+
+[review]
+# The level of the builder's own code review before the handoff.
+code_review_level = "high"
+
+[tracker]
+# The 2 cost fields of a work item (see docs/ado-setup.md).
+subagent_cost_field = "Custom.CostUSD"
+main_session_cost_field = "Custom.MainSessionCostUSD"
