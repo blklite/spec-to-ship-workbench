@@ -1,9 +1,13 @@
 [project]
 name = "workbench"
-version = "0.1.0a0"
-description = "A spec goes in, checked work comes out: the process, roles, prompts and cost script."
+version = "0.2.0"
+description = "A spec goes in, checked work comes out: the process, roles and prompts, the runner and its adapters, the wb stage machine, its pages and MCP server, the plugin and the secret guard."
 requires-python = ">=3.11"
 license = "MIT"
 
+[project.optional-dependencies]
+test = ["tzdata"]  # the zone database of zoneinfo, for the page tests on Windows
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

@@ -12,9 +12,22 @@
 allow @example\.(com|org|net|invalid)([^A-Za-z0-9.-]|$)
 allow noreply@anthropic\.com([^A-Za-z0-9.-]|$)
 
-# A user folder: /home/<name>, /Users/<name>, C:\Users\<name>, C:/Users/<name>
-user-path /home/[A-Za-z0-9._-]+
-user-path /Users/[A-Za-z0-9._-]+
+# A systemd instance unit such as getty@tty1.service, or its drop-in folder
+# getty@tty1.service.d, is not an email address. Like the
+# example-domain rule, it removes only the part from the "@" on, so a private
+# word in front of it is still found.
+allow @[A-Za-z0-9_.:-]*\.(service|socket|target|timer|mount)(\.d)?([^A-Za-z0-9.-]|$)
+
+# A user folder: /home/<name>, /Users/<name>, C:\Users\<name>, C:/Users/<name>,
+# and the Git Bash, WSL and file URL forms /c/Users/<name>, /mnt/c/Users/<name>
+# and file:///home/<name>. The /home/ and /Users/ rules need a boundary before
+# the slash: no letter, digit, ".", "_", "-" or "/" right in front of it. A
+# repository path such as a/home/x in a diff header is part of a longer path,
+# not a user folder, and a hit on it would block the push of every change to
+# files under that folder.
+user-path (^|[^A-Za-z0-9._/-]|file://)/home/[A-Za-z0-9._-]+
+user-path (^|[^A-Za-z0-9._/-]|file://)/Users/[A-Za-z0-9._-]+
+user-path (^|[^A-Za-z0-9._/-])/(mnt/)?[A-Za-z]/Users/[A-Za-z0-9._-]+
 user-path [A-Za-z]:[\\/]+Users[\\/]+[A-Za-z0-9._-]+
 
 # An email address

@@ -12,6 +12,8 @@ The owner owns the tier table: which actions are Low, Medium and High tier. The 
 | A reviewer from a second model family | Optional | Yes, when a runner exists | Yes, when a runner exists |
 | The blind suite of an isolated test author, written from the spec before the code is seen | No | The owner's choice at intake | The owner's choice at intake |
 
+**A required check that did not run:** when a check is "Yes" for the tier of the item and it did not run, or ran and gave no result, the report puts it under "what is not verified" with its reason, never with the checks that passed ([report.md](report.md)). An optional check that did not run goes with the checks as "optional, not run", with its reason.
+
 Deterministic checks are the floor: tests, the contrast scan, the screenshot comparison and the mutation probe give the same result for each model.
 
 ## The review rule for agent builds

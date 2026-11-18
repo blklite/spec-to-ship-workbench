@@ -1,0 +1,7 @@
+# Known message hits for scripts/secret-scan.sh.
+#
+# Each entry is 1 full SHA (40 hex characters) of a commit whose message has a
+# hit that stays in the history. The scan does not count a hit in the message
+# of a listed commit. A hit in a file of that commit, in a tag or in any other
+# commit still counts. Lines that start with # and empty lines are skipped.
+# A new entry needs the owner's approval.

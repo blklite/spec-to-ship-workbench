@@ -17,7 +17,23 @@
 - **A test removal.** The removal of a test, or a change that makes the logic of a test weaker. The owner approves a removal at intake: the spec lists the tests that the item may retire. A test that carries a marker with the event that ends it is retired by an agent alone at that event; this applies to tests written after the marker rule exists. An agent never removes a different test alone.
 - Each High tier action. The list is `config:tiers.high.actions`; the example config names credentials, auth, data migrations, a delete of live data, production access and the network edge.
 - **A merge, and a write to live data.** For a Low tier item with all checks green, 1 approval from the owner covers the merge and the live write. After `config:delivery.low_tier_auto_after` Low items with no defect found after delivery, both become automatic, with an alert.
+- **The lower of 2 severities.** An action that follows the lower of 2 severities of 1 finding ([triage.md](triage.md), "A different severity").
 - More budget.
+
+## The open questions of an intake
+
+The intake applies the test above to each open question of a spec. A question that passes the test is not a question for the owner: the intake decides it and writes it in the spec under "Decided for you", with the choice and 1 reason line ([docs/specs.md](../docs/specs.md)). The spec check reads that section and makes a line that fails the test a question for the owner.
+
+The owner gets a question at intake only for:
+
+- a change of what a user sees or does;
+- a High tier action, a secret, the secret guard or production access;
+- a test removal;
+- more budget, or a change of size;
+- a conflict between 2 items;
+- a choice that the intake marks as low confidence, with the reason.
+
+A batch of specs has at most `config:intake.max_questions` questions for the owner. With more, the intake splits the batch or states why. Only the owner's answers go under Rulings.
 
 ## The default for a doubt that is not on a list
 

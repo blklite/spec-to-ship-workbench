@@ -1,25 +1,37 @@
 # Example mapping of each role (roles/) to a persona (personas/).
 # The 7 personas are an example set: replace a persona, or map a role to your
-# own persona file. A runner adapter (v0.1b) will read the same table to pick
-# a runner for each role.
+# own persona file. `runner` names a [runners.<name>] table of
+# config/workbench.example.toml: the runner that does the role's steps.
 
 [roles.builder]
 persona = "marge"
+runner = "claude"
 
 [roles.reviewer]
 persona = "lisa"
+runner = "claude"
 
 [roles.rework]
 persona = "milhouse"
+runner = "claude"
 
 [roles.spec-checker]
 persona = "ned"
+runner = "claude"
 
 [roles.product-owner]
 persona = "apu"
+runner = "claude"
 
 [roles.architect]
 persona = "frink"
+runner = "claude"
 
 [roles.agentic-reviewer]
 persona = "martin"
+runner = "codex"
+
+[roles.second-reviewer]
+# The code review by a second model family (prompts/code-review.md).
+persona = "lisa"
+runner = "codex"

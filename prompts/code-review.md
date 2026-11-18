@@ -52,6 +52,8 @@ Fix: <the concrete change that removes it>
 
 If there are no findings, write `No findings.` and 1 sentence on what you checked.
 
+Write the last line as plain text, not inside a code block.
+
 The last line of your reply is exactly
 
 ```

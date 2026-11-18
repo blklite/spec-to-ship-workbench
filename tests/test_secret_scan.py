@@ -205,6 +205,32 @@ def test_example_domain_allow_rule_has_a_boundary(bash, tmp_path):
     assert "WORKTREE:b.txt:1 private:person" in out
 
 
+def test_systemd_instance_units_are_allowed(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    (repo / "units.sh").write_text(
+        "systemctl show getty" + "@" + "tty1.service\n"
+        "unit=serial-getty" + "@" + "ttyS0.service; x" + "@" + ".timer\n"
+        "a" + "@" + "b.socket a" + "@" + "b.target a" + "@" + "b.mount\n"
+        "/etc/systemd/system/getty" + "@" + "tty1.service.d/autologin.conf\n"
+    )
+    rc, out, err = scan(bash, repo)
+    assert (rc, out) == (0, ""), err
+
+
+def test_systemd_allow_rule_has_a_boundary_and_keeps_a_word_in_front(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    # a real domain that only starts like a unit suffix
+    (repo / "a.txt").write_text("joe" + "@" + "tty1.services.net\n")
+    (repo / "c.txt").write_text("joe" + "@" + "tty1.service.dk\n")
+    # a private word in front of the unit is still found
+    (repo / "b.txt").write_text(PRIVATE["person"] + "@" + "tty1.service\n")
+    rc, out, _ = scan(bash, repo, denylist_file(tmp_path))
+    assert rc == 1
+    assert "WORKTREE:a.txt:1 email" in out
+    assert "WORKTREE:c.txt:1 email" in out
+    assert "WORKTREE:b.txt:1 private:person" in out
+
+
 def test_denylist_tab_separator_and_bad_line(bash, tmp_path):
     repo = make_repo(tmp_path)
     (repo / "x.txt").write_text(PRIVATE["host"] + "\n")
@@ -442,4 +468,233 @@ def test_the_tag_names_item_holds_the_names_only(bash, tmp_path):
     # words that the for-each-ref line holds next to the name: type and path
     deny.write_text("kind commit\nkind tag\nkind refs\n")
     rc, out, err = scan(bash, repo, deny)
+    assert (rc, out) == (0, ""), err
+
+
+# --- the message mode: --message <file> ---------------------------------------
+
+def run_scan(bash: str, args: list[str], denylist: Path | None = None,
+             known: Path | str | None = None, cwd: Path | None = None, **extra: str):
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("WORKBENCH_DENYLIST", "WORKBENCH_KNOWN_HITS")}
+    env.update(extra)
+    if denylist is not None:
+        env["WORKBENCH_DENYLIST"] = str(denylist)
+    if known is not None:
+        env["WORKBENCH_KNOWN_HITS"] = str(known)
+    r = subprocess.run([bash, SCRIPT, *args], cwd=cwd, capture_output=True, text=True, env=env)
+    return r.returncode, r.stdout, r.stderr
+
+
+def _no_repo_scan(bash: str, tmp_path: Path, text: str | None):
+    """The scan of 1 text file, with no git repo to reach (GIT_DIR is missing)."""
+    if text is not None:
+        (tmp_path / "msg.txt").write_bytes(text.encode())
+    return run_scan(bash, ["--message", "msg.txt"], denylist_file(tmp_path),
+                    cwd=tmp_path, GIT_DIR=(tmp_path / "no-repo").as_posix())
+
+
+def test_message_mode_clean_message_exits_0(bash, tmp_path):
+    rc, out, err = _no_repo_scan(bash, tmp_path, "feat: a clean subject\n\nA clean body.\n")
+    assert (rc, out) == (0, ""), err
+
+
+def test_message_mode_prints_the_line_and_the_class_only(bash, tmp_path):
+    word, key = PRIVATE["host"], GENERIC["anthropic-key"]
+    rc, out, err = _no_repo_scan(bash, tmp_path, f"subject\n\nbuilt on {word}\nkey {key}\n")
+    assert rc == 1, (out, err)
+    assert out.splitlines() == ["MESSAGE:3 private:host", "MESSAGE:4 anthropic-key"]
+    assert word.lower() not in (out + err).lower() and key not in out + err
+
+
+def test_message_mode_allows_the_placeholders(bash, tmp_path):
+    text = ("docs: a subject\n\nmail someone" + "@" + "example.com\n\n"
+            "Co-Authored-By: Bot <noreply" + "@" + "anthropic.com>\n")
+    rc, out, err = _no_repo_scan(bash, tmp_path, text)
+    assert (rc, out) == (0, ""), err
+
+
+def test_message_mode_missing_file_exits_3(bash, tmp_path):
+    rc, out, err = _no_repo_scan(bash, tmp_path, None)
+    assert (rc, out) == (3, "") and "message file not found" in err, err
+    rc, out, err = run_scan(bash, ["--message"], cwd=tmp_path)
+    assert (rc, out) == (3, "") and "--message needs a file" in err, err
+
+
+# --- the known message hits: scripts/known-message-hits.txt -------------------
+
+def known_file(tmp_path: Path, *lines: str) -> Path:
+    p = tmp_path / "known.txt"
+    p.write_text("# known message hits\n\n" + "".join(f"{x}\n" for x in lines))
+    return p
+
+
+def _message_hit(repo: Path, files: dict[str, str] | None = None) -> str:
+    """A commit whose message holds a private word on line 3; its SHA."""
+    for name, text in (files or {"m.txt": "plain\n"}).items():
+        (repo / name).write_text(text)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "merge\n\nfrom " + PRIVATE["host"])
+    return git(repo, "rev-parse", "HEAD")
+
+
+def test_a_message_hit_of_a_listed_commit_is_accepted(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    sha = _message_hit(repo)
+    known_file(tmp_path, sha)
+    denylist_file(tmp_path)
+    # relative paths are read from the caller's folder, as for the other lists
+    rc, out, err = run_scan(bash, ["repo"], denylist="denylist.txt", known="known.txt",
+                            cwd=tmp_path)
+    assert (rc, out) == (0, ""), err
+    assert "secret-scan: 1 known message hit(s) accepted" in err.splitlines()
+    assert PRIVATE["host"].lower() not in err.lower()
+
+
+def test_a_message_hit_of_an_unlisted_commit_still_counts(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    unlisted = _message_hit(repo)
+    listed = _message_hit(repo, {"n.txt": "plain\n"})  # the same hit, a 2nd commit
+    rc, out, err = run_scan(bash, [repo.as_posix()], denylist_file(tmp_path),
+                            known_file(tmp_path, listed))
+    assert rc == 1, (out, err)
+    assert out.splitlines() == [f"{unlisted}:COMMIT_MSG:3 private:host"]
+    assert "secret-scan: 1 known message hit(s) accepted" in err.splitlines()
+
+
+@pytest.mark.parametrize("bad", ["abc1234", "not a sha", "SHA + text"],
+                         ids=["short", "text", "sha-and-text"])
+def test_a_bad_known_hits_line_exits_3(bash, tmp_path, bad):
+    repo = make_repo(tmp_path)
+    sha = git(repo, "rev-parse", "HEAD")
+    line = sha + " # note" if bad == "SHA + text" else bad
+    rc, out, err = run_scan(bash, [repo.as_posix()], known=known_file(tmp_path, sha, line))
+    assert (rc, out) == (3, ""), err
+    assert "line 4" in err  # the line number only, never the text of the line
+    assert line not in err and "note" not in err
+
+
+def test_a_blob_hit_in_a_listed_commit_still_counts(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    word = PRIVATE["host"]
+    # a file named like the message label must not pass as the message
+    sha = _message_hit(repo, {"x.txt": f"x {word}\n", "COMMIT_MSG": f"y {word}\n"})
+    rc, out, err = run_scan(bash, [repo.as_posix()], denylist_file(tmp_path),
+                            known_file(tmp_path, sha))
+    assert rc == 1, (out, err)
+    assert set(out.splitlines()) == {
+        f"{sha}:x.txt:1 private:host", f"{sha}:COMMIT_MSG:1 private:host",
+        "WORKTREE:x.txt:1 private:host", "WORKTREE:COMMIT_MSG:1 private:host"}
+    assert "secret-scan: 1 known message hit(s) accepted" in err.splitlines()
+
+
+def test_a_listed_prefix_does_not_accept(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    sha = _message_hit(repo)
+    rc, out, err = run_scan(bash, [repo.as_posix()], denylist_file(tmp_path),
+                            known_file(tmp_path, sha[:12]))
+    assert (rc, out) == (3, ""), err
+    # a full-length id that differs from the commit only in its last character
+    other = sha[:-1] + ("0" if sha[-1] != "0" else "1")
+    rc, out, err = run_scan(bash, [repo.as_posix()], denylist_file(tmp_path),
+                            known_file(tmp_path, other))
+    assert rc == 1 and out.splitlines() == [f"{sha}:COMMIT_MSG:3 private:host"], err
+
+
+def test_a_known_hits_file_with_crlf_line_ends_is_read(bash, tmp_path):
+    repo = make_repo(tmp_path)
+    sha = _message_hit(repo)
+    known = tmp_path / "known.txt"
+    known.write_bytes(f"# a list saved on Windows\r\n\r\n{sha}\r\n".encode())
+    rc, out, err = run_scan(bash, [repo.as_posix()], denylist_file(tmp_path), known)
+    assert (rc, out) == (0, ""), err
+
+
+# --- the user-path rules: a repository path is not a user folder ------------
+
+HOME, USERS = "/ho" + "me/", "/Us" + "ers/"
+
+
+def _scan_three_modes(bash: str, tmp_path: Path, text: str):
+    """The scan of 1 line of text in the working tree, in history (added, then
+    deleted) and in the message mode: (rc, out) of the repo scan and of the
+    message scan, and the commit that holds the text in history."""
+    repo = make_repo(tmp_path)
+    (repo / "old.txt").write_text(text + "\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "add old")
+    old = git(repo, "rev-parse", "HEAD")
+    git(repo, "rm", "-q", "old.txt")
+    git(repo, "commit", "-q", "-m", "tidy")
+    (repo / "new.txt").write_text(text + "\n")
+    rc, out, err = scan(bash, repo)
+    mrc, mout, merr = _no_repo_scan(bash, tmp_path, text + "\n")
+    return (rc, out, err), (mrc, mout, merr), old
+
+
+def test_user_path_rules_are_anchored():
+    lines = (ROOT / "scripts" / "patterns.txt").read_text().splitlines()
+    for rule in (
+        "user-path (^|[^A-Za-z0-9._/-]|file://)/home/[A-Za-z0-9._-]+",
+        "user-path (^|[^A-Za-z0-9._/-]|file://)/Users/[A-Za-z0-9._-]+",
+        "user-path (^|[^A-Za-z0-9._/-])/(mnt/)?[A-Za-z]/Users/[A-Za-z0-9._-]+",
+    ):
+        assert rule in lines
+    rules = [ln.split(" ", 1)[1] for ln in lines if ln.startswith("user-path ")]
+    assert not [r for r in rules if r.startswith(("/home/", "/Users/"))]
+    assert any(ln.startswith("#") and "a/home/x" in ln for ln in lines)
+
+
+REPO_PATHS = [
+    "diff --git a" + HOME + "x/y.py b" + HOME + "x/y.py",
+    "--- a" + HOME + "x/y.py",
+    "+++ b" + HOME + "x/y.py",
+    "src" + HOME + "x",
+    "docs" + USERS + "x",
+    "." + HOME + "x",
+    ".." + HOME + "x",
+    "tests_" + HOME + "x",
+    "v1.2-" + HOME + "x",
+    "a/c" + USERS + "x",
+    "src/mnt/c" + USERS + "x",
+    # a digit, a capital letter and a "/" in front are part of a path too
+    "v2" + HOME + "x",
+    "SRC" + HOME + "x",
+    "a/" + HOME + "x",
+]
+
+
+@pytest.mark.parametrize("text", REPO_PATHS)
+def test_a_repository_path_is_not_a_user_path(bash, tmp_path, text):
+    (rc, out, err), (mrc, mout, merr), _ = _scan_three_modes(bash, tmp_path, text)
+    assert (rc, out) == (0, ""), err
+    assert (mrc, mout) == (0, ""), merr
+
+
+_BEFORE = ["", " ", "\t", "=", '"', "'", "(", ":", ",", "~", "@"]
+USER_FOLDERS = [b + d + "plantuser" for d in (HOME, USERS) for b in _BEFORE] + [
+    "/c" + USERS + "plantuser",
+    "/C" + USERS + "plantuser",
+    "/mnt/c" + USERS + "plantuser",
+    "file://" + HOME + "plantuser",
+    "file://" + USERS + "plantuser",
+]
+
+
+@pytest.mark.parametrize("text", USER_FOLDERS)
+def test_a_user_folder_is_a_user_path(bash, tmp_path, text):
+    (rc, out, err), (mrc, mout, merr), old = _scan_three_modes(bash, tmp_path, text)
+    assert rc == 1, (out, err)
+    lines = set(out.splitlines())
+    assert "WORKTREE:new.txt:1 user-path" in lines
+    assert f"{old}:old.txt:1 user-path" in lines
+    assert (mrc, mout) == (1, "MESSAGE:1 user-path\n"), merr
+
+
+def test_the_headers_of_a_change_under_home_are_clean(bash, tmp_path):
+    text = ""
+    for folder in ("sensor-" + "relay", "weather" + "-poller"):
+        path = "ho" + "me/" + folder + "/main.py"
+        text += f"diff --git a/{path} b/{path}\n--- a/{path}\n+++ b/{path}\n"
+    rc, out, err = _no_repo_scan(bash, tmp_path, text)
     assert (rc, out) == (0, ""), err

@@ -1,0 +1,2 @@
+{"type":"step_start","timestamp":1760000000001,"sessionID":"ses_test3","part":{"id":"prt_d1","sessionID":"ses_test3","messageID":"msg_d1","type":"step-start"}}
+{"type":"error","timestamp":1760000000002,"sessionID":"ses_test3","error":{"name":"APIError","data":{"message":"the model is not available","isRetryable":false}}}

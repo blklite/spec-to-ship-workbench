@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "workbench": {
+      "command": "ssh",
+      "args": ["-T", "-o", "BatchMode=yes", "workbench-host", "~/.local/bin/wb-mcp"]
+    }
+  }
+}

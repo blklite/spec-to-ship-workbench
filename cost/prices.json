@@ -1,5 +1,5 @@
 {
- "source": "Anthropic list prices in USD per million tokens, as used by the workbench on 2026-09-25. Check them against the current price list before you rely on a figure.",
+ "source": "List prices in USD per million tokens (standard tier), from the vendors' pricing pages, checked on 2026-10-10: https://platform.claude.com/docs/en/about-claude/pricing (Anthropic) and https://developers.openai.com/api/docs/pricing (OpenAI). claude-haiku-5-5 and gpt-6.1-sol carry their short-prompt prices (Haiku 5.5: a prompt of up to 100,000 tokens; gpt-6.1-sol: up to 272K input tokens); a longer request costs more, which this file does not model. Check them against the current price list before you rely on a figure. local is the model of each call of the opencode adapter (a local model behind an OpenAI-compatible API on the owner's own host): it costs $0 for each token.",
  "cache_write_multiplier": {
   "5m": 1.25,
   "1h": 2.0
@@ -15,6 +15,26 @@
    "input": 10.0,
    "output": 50.0,
    "cache_read": 0.25
+  },
+  "claude-sonnet-5-5": {
+   "input": 2.0,
+   "output": 10.0,
+   "cache_read": 0.2
+  },
+  "claude-haiku-5-5": {
+   "input": 0.1,
+   "output": 0.5,
+   "cache_read": 0.01
+  },
+  "gpt-6.1-sol": {
+   "input": 2.0,
+   "output": 10.0,
+   "cache_read": 0.1
+  },
+  "local": {
+   "input": 0.0,
+   "output": 0.0,
+   "cache_read": 0.0
   }
  }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "workbench",
+  "owner": {
+    "name": "workbench"
+  },
+  "plugins": [
+    {
+      "name": "workbench",
+      "source": "./plugin",
+      "description": "Slash commands over the wb MCP server: intake, status, answer and run-next."
+    }
+  ]
+}

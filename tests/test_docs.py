@@ -26,8 +26,22 @@ def test_readme():
     assert not re.search(r"https?://(www\.)?(github|gitlab|dev\.azure)\.", text)
 
 
+def test_readme_lists_the_sandbox_pattern_and_the_probe():
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert re.search(r"^\| \[process/sandbox\.md\]\(process/sandbox\.md\) \|", text, re.M)
+    assert re.search(r"^\| \[scripts/sandbox-probe\.sh\]\(scripts/sandbox-probe\.sh\) \|", text, re.M)
+    status = next(l for l in text.splitlines() if l.startswith("**Status:"))
+    assert "sandbox pattern" in status and "and the sandbox" not in status
+
+
 def test_claude_md_points_to_agents_md():
     assert "AGENTS.md" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def test_the_private_word_exception_names_the_source():
+    text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    assert ("The 1 exception is the attribution and the source of quoted third-party text,"
+            " as its licence requires,") in text
 
 
 def test_ado_checklist():

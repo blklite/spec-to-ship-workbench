@@ -1,0 +1,6 @@
+{
+  "name": "workbench",
+  "version": "0.2.0",
+  "description": "Work an item of the workbench with 1 slash command each for the intake, the status, an answer and the next run, over the wb MCP server.",
+  "license": "MIT"
+}

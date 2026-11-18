@@ -42,10 +42,44 @@ actions = [
 # delivery, the merge and the live write of a Low tier item become automatic,
 # with an alert.
 low_tier_auto_after = 3
+# The file of the token that pushes the branch of an item and opens its pull
+# request (python -m wb): an absolute path outside each clone, mode 0600.
+# The token goes only to the push and the API call, never to a step.
+push_token_file = "/absolute/path/of/the/push-token"
+
+[deliver]
+# `python -m wb deliver <id>`: the chain after ready, with no model. Each list
+# is a command with no shell, run in the work folder; wb fills {id}, {head},
+# {base}, {branch} and {pr} in each word. An empty list stops the run. Each
+# list is your own command, set in the local config only; wb/README.md, "The
+# commands of deliver", says what each must accept and print.
+retry_seconds = 300      # busy host-test slot: wait, try again
+slot_seconds = 14400     # then STOP
+command_seconds = 7200   # limit of 1 command
+review_state = "In Review"
+gate_source = []         # stdout: the source of the gate script
+ado = []                 # + state|comment|field <id> ...
+
+[deliver.default]        # no --repo; else [deliver.<repos name>]
+# Your own commands, in the local config only, for example
+# host_test = ["/absolute/path/of/host_test.sh", "{head}"]
+host_test = []
+code_review = []
+second_review = []
 
 [specs]
 home = "specs/"
 max_kb = 8
+
+[intake]
+# The most questions for the owner in 1 batch of specs. The decision rights
+# answer the other open questions.
+max_questions = 5
+
+[triage]
+# The most Low findings of a Lows list that 1 spec takes, from the files that
+# the spec already changes.
+lows_per_spec = 5
 
 [messages]
 # A message to the owner fits on 1 screen.
@@ -62,3 +96,142 @@ code_review_level = "high"
 # The 2 cost fields of a work item (see docs/ado-setup.md).
 subagent_cost_field = "Custom.CostUSD"
 main_session_cost_field = "Custom.MainSessionCostUSD"
+# The tracker that the stage machine (python -m wb) writes: "local" keeps
+# each work item in a file of its item folder (config:state.home).
+kind = "local"
+
+[state]
+# The item folders of the stage machine (python -m wb): state.json, the
+# tracker file of the local tracker and the run folder of each step. A
+# relative path is relative to the repo root; git ignores the default.
+home = "state/"
+
+[work]
+# The work folder of item <id> is <home>/<id>: a git work tree that must exist
+# before the first step. A relative path is relative to the repo root; git
+# ignores the default. The branch of an item is feature/<id> unless
+# `wb intake --branch` names another; `base` is the branch it starts from.
+home = "work/"
+base = "main"
+
+[pages]
+# The browser storage key of the theme choice of the site viewer that serves the
+# pages (python -m wb pages): 1 to 64 letters, digits, ., _ and -. Private:
+# set it in the local file only. Empty: the pages carry no theme script, follow
+# the light or dark mode of the system and show no theme buttons.
+theme_key = ""
+# The base address of the ADO work items: https, a host, an optional port of 1
+# to 65535 and a path that ends with /, with no query or fragment and no " or <.
+# An item id of digits links to <ado_url><id>. Private: set it in the local file only.
+ado_url = ""
+# The IANA time zone of the times on the pages, for example UTC. Empty: UTC.
+time_zone = ""
+# The host and the wb command of the line to copy of a case 3 or 4 wait on the
+# state page: <wb_command> approve <id> high, or <wb_command> answer <id> --file <file>.
+# wb_host: 1 to 80 printable ASCII characters; empty: no host name on the line.
+# wb_command: 1 line of 1 to 300 printable ASCII characters with no leading $
+# and no space at either end, for example cd ~/<clone> && python3 -m wb; empty:
+# python -m wb. Private: set both in the local file only.
+wb_host = ""
+wb_command = ""
+
+# The rows of the Commands card at the end of the state page, at most 30, in
+# this order: the host in bold, the label, then the text to copy, which is
+# cd <folder> && <command>, or <command> when folder is empty. label and host:
+# 1 to 80 printable ASCII characters; the copy text: as wb_command. Each row
+# needs the 4 keys. No rows: no card. Private: set the rows in the local file only.
+[[pages.commands]]
+label = "Run the next step of an item"
+host = "example-host"
+folder = "~/example-clone"
+command = "python3 -m wb run-next <id>"
+
+[notify]
+# python -m wb notify, a cron job each 2 minutes, sends the event lines of
+# events.jsonl in the state home as pushes (wb/README.md). The command runs
+# with no shell and gets each push as 1 JSON object on stdin: {"title",
+# "body", "priority", "tags", "click"}. Private: set it in the local file
+# only. Empty: notify is a usage error.
+command = []
+# The click target of each push: an https URL that ends with /. Empty: no
+# click target. Private: set it in the local file only.
+page_url = ""
+# In these hours of pages.time_zone a Needs-you push waits for the next digest.
+quiet = "22:00-07:00"
+# The times of the digest in pages.time_zone.
+digests = ["08:00"]
+# The FYI lines go in 1 push at most each fyi_minutes.
+fyi_minutes = 30
+# 1 reminder of a Needs-you push after remind_hours, while the item still shows it.
+remind_hours = 4
+
+[repos]
+# The repositories that `wb intake --repo <name>` can name: a name of
+# letters, digits, - and _, and a GitHub clone URL. The work folder of the
+# item clones that URL, and the push goes there. An item with no --repo
+# uses the origin of the runner clone: that is the default.
+# example = "https://github.com/example/widget.git"
+
+[steps]
+# The time limit of 1 step of the stage machine, in seconds; a step gets the
+# smaller of this and the time that is left in the item's budget.
+max_seconds = 3600
+
+# The runners: 1 table for each runner that a role can use. `adapter` picks
+# the code that drives the CLI (runner/adapters/), `model` is the full model
+# id, the other keys are the permission settings of that adapter. No key is
+# passed through to the CLI as it is: an unknown key is a usage error, and so
+# is a setting that would bypass the permissions (see runner/README.md).
+
+[runners.claude]
+adapter = "claude"
+model = "claude-opus-5-5"
+# The tools that `claude -p` may use with no prompt (--allowedTools).
+allowed_tools = ["Read", "Grep", "Glob", "Edit", "Write"]
+# The settings files that may add to the permissions (--setting-sources):
+# none of user, project or local by default. Naming a source hands that
+# file's allow rules and hooks to the step.
+setting_sources = []
+# default, dontAsk or plan (--permission-mode, always passed; default:
+# default). A runner that must edit files names Edit and Write above.
+permission_mode = "default"
+
+[runners.claude-haiku]
+adapter = "claude"
+model = "claude-haiku-5-5"
+allowed_tools = ["Read", "Grep", "Glob"]
+setting_sources = []
+
+[runners.codex]
+adapter = "codex"
+model = "gpt-6.1-sol"
+# read-only or workspace-write (codex exec -s).
+sandbox = "read-only"
+# Optional, in any runner table: a wrapper command of the host. The step runs
+# wrap + the command of the adapter (runner/README.md, "The wrap").
+# wrap = ["/absolute/path/of/a/wrapper"]
+# Optional: true makes a run with no command UNAVAILABLE, whatever its last
+# line says (runner/README.md).
+# require_commands = true
+# Optional, in any runner table: the secret guard of python -m wb, a scan
+# before each step of this runner (wb/README.md). Default: true for each
+# adapter except fake.
+# guard = true
+
+[runners.opencode-local]
+# A local model behind an OpenAI-compatible API, through opencode. No role
+# maps to it: a new runner runs the reference items first (reference/).
+adapter = "opencode"
+model = "gpt-oss:20b"
+# http or https, a host, an optional port, then /v1.
+base_url = "http://localhost:11434/v1"
+# allow or deny: the file edit tools and the shell tool. "ask" is refused:
+# the step has no terminal.
+edit = "allow"
+bash = "allow"
+
+[runners.fake]
+# Replays a reply script; for tests. The path is relative to the repo root.
+adapter = "fake"
+model = "fake-model"
+script = "tests/fixtures/runner/fake-reply.json"

@@ -14,7 +14,7 @@ from conftest import ROOT, denylist_hits, load_denylist
 
 ROLES = {
     "builder", "reviewer", "rework", "spec-checker",
-    "product-owner", "architect", "agentic-reviewer",
+    "product-owner", "architect", "agentic-reviewer", "second-reviewer",
 }
 PERSONAS = {"marge", "lisa", "milhouse", "ned", "apu", "frink", "martin"}
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
@@ -164,3 +164,41 @@ def test_no_private_word_in_roles_and_personas():
         for p in (ROOT / folder).glob("*.md"):
             hits = denylist_hits(p.read_text(encoding="utf-8"), pairs)
             assert not hits, f"private words of classes {sorted(set(hits))} in {folder}/{p.name}"
+
+
+def test_each_builder_does_bullet_but_the_last_ends_with_a_semicolon():
+    does = (ROOT / "roles" / "builder.md").read_text(encoding="utf-8").split("**Does:**", 1)[1]
+    bullets = re.findall(r"^- .*$", does.split("**Never:**", 1)[0], re.M)
+    assert len(bullets) > 1
+    for line in bullets[:-1]:
+        assert line.endswith(";"), line
+
+
+def test_the_builder_never_line_names_the_retire_list():
+    """The role's guard points at the spec's retire list."""
+    never = (ROOT / "roles" / "builder.md").read_text(encoding="utf-8").split("**Never:**", 1)[1]
+    assert never.split("\n", 1)[0].startswith(
+        " removes or weakens a test that is not on the spec's retire list;")
+
+
+def test_the_builder_output_names_the_report_items():
+    output = (ROOT / "roles" / "builder.md").read_text(encoding="utf-8").split("**Output:**", 1)[1]
+    for item in ("red first", "the test counts on the base and at the head", "the diff stat"):
+        assert item in output, item
+
+
+def test_the_builder_review_level_is_the_config_key():
+    """The role names the configured review level, not a value."""
+    text = (ROOT / "roles" / "builder.md").read_text(encoding="utf-8")
+    assert "a code review at level `config:review.code_review_level` on its own diff" in text
+    assert "level `high`" not in text
+
+
+def test_the_rework_role_leaves_the_commit_to_the_caller():
+    """The rework step never commits; the caller commits after REWORK: DONE."""
+    text = (ROOT / "roles" / "rework.md").read_text(encoding="utf-8")
+    assert "1 repair for each finding" in text and "1 commit for each finding" not in text
+    assert "the caller commits after `REWORK: DONE`" in text
+    output = text.split("**Output:**", 1)[1].strip()
+    assert output.endswith("`REWORK: DONE` or `REWORK: BLOCKED - <reason>`.")
+    assert "<sha>" not in text and "the commits" not in output

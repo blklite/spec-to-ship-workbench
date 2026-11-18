@@ -6,3 +6,7 @@ denylist.txt
 # Your filled config holds private values (the owner name): keep it local.
 config/workbench.toml
 config/personas.toml
+runs/
+# The item folders and the work folders of the stage machine (state.home and work.home of the example config).
+/state/
+/work/

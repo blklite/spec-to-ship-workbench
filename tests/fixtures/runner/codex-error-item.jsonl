@@ -1,0 +1,8 @@
+{"type":"thread.started","thread_id":"00000000-0000-0000-0000-000000000004"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"ls","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"ls","aggregated_output":"a.txt\n","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"error","message":"Reconnecting... 1/5 (stream disconnected before completion: an example)"}}
+{"type":"item.completed","item":{"id":"item_3","type":"error","message":"the sandbox refused the command"}}
+{"type":"item.completed","item":{"id":"item_4","type":"agent_message","text":"I listed the folder.\n\nECHO: OK"}}
+{"type":"turn.completed","usage":{"input_tokens":9000,"cached_input_tokens":4000,"cache_write_input_tokens":0,"output_tokens":200,"reasoning_output_tokens":50}}

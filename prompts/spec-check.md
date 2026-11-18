@@ -41,7 +41,7 @@ Never pipe the test runner through `tail` or `head`: it hides the exit code.
 
 ## Phase 4: the questions
 
-Collect the questions for the owner into 1 batch. For each question: the AC, the choice, the options (A, B, ...), and your recommendation with its reason. Ask nothing that the decision rights answer; put those answers in the notes for the builder instead.
+Collect the questions for the owner into 1 batch. For each question: the AC, the choice, the options (A, B, ...), and your recommendation with its reason. Ask nothing that the decision rights answer; put those answers in the notes for the builder instead. Read the spec's "Decided for you" section: a line that fails the test of `process/decision-rights.md` is a question for the owner.
 
 ## Output
 
@@ -53,6 +53,8 @@ Collect the questions for the owner into 1 batch. For each question: the AC, the
 2. The pins found, with the action for each.
 3. The notes for the builder: what the decision rights answered, and any fact the builder needs.
 4. The questions for the owner, if any, as 1 numbered batch.
+
+Write the last line as plain text, not inside a code block.
 
 The last line of your reply is exactly 1 of these, with the id of the item and the count of questions filled in:
 

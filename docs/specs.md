@@ -44,6 +44,9 @@ As a <role>, I want <capability>, so that <outcome>.
 ## Rules
 
 - Each AC has a *Proof*: a test or a check that fails when the AC is not met.
+- A spec has no open question: the intake refuses a `## Open questions` heading, and `TBD` or `TODO` as a whole word, outside code.
+- The header may name the repository of the item with the word `Repo:` (for example `Repo: the widget repo.`). It is for the reader only: the intake does not require it or read it. The repository that the workbench uses is the `--repo <name>` of `wb intake` (the `repo` of the tool `wb_intake`), a name from `[repos]` in the config; with none, the item uses the origin of the runner clone. An unknown name is refused, a new repository is refused while the work folder of the item exists, and the owner deletes a wrong work folder by hand.
 - The tier follows the owner's tier table ([process/checks-by-tier.md](../process/checks-by-tier.md)); the size and its limits follow [process/budget.md](../process/budget.md).
 - The list of tests that the item can retire is the only approval to remove a test ([process/decision-rights.md](../process/decision-rights.md)).
+- An open question that passes the test of the decision rights goes in an optional section `Decided for you` after Rulings, with the choice and 1 reason line, not under Rulings ([process/decision-rights.md](../process/decision-rights.md), "The open questions of an intake").
 - The spec check (stage 2) reads the spec as written; a gap it finds becomes a question for the owner or a note for the builder, and an answer becomes a line under Rulings.
