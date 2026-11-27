@@ -17,6 +17,10 @@ The workbench is a process for running software work with coding agents: you wri
 
 The workbench stops and asks the owner in 4 cases only: the budget is not sufficient, a decision is outside the decision rights, the action is High tier, or the checks stay red after the allowed rounds.
 
+## Names
+
+The **main session** is the session that writes the specs, answers the spec checks, runs the gates and merges for 1 batch of items. Its nickname is the **Mr Meeseeks session**: it exists for 1 batch only, and a fresh session takes the next batch. A long session reads more context at each turn, so it costs more. The process text and the commands (for example `wb record merge --by main`) keep the name "main session".
+
 ## What is where
 
 | Folder | What |
